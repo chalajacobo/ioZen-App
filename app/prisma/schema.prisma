@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USERS
+// ============================================================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  chatflows Chatflow[]
+
+  @@map("users")
+}
+
+// ============================================================================
+// CHATFLOWS
+// ============================================================================
+
+model Chatflow {
+  id          String         @id @default(cuid())
+  name        String
+  description String?        // Original user prompt
+  schema      Json           // Generated chatflow structure
+  status      ChatflowStatus @default(DRAFT)
+  shareUrl    String         @unique // Public URL slug
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submissions ChatflowSubmission[]
+
+  @@index([userId])
+  @@index([shareUrl])
+  @@map("chatflows")
+}
+
+enum ChatflowStatus {
+  DRAFT      // Being created/edited
+  PUBLISHED  // Live and accepting submissions
+  ARCHIVED   // No longer accepting submissions
+}
+
+// ============================================================================
+// CHATFLOW SUBMISSIONS
+// ============================================================================
+
+model ChatflowSubmission {
+  id              String           @id @default(cuid())
+  status          SubmissionStatus @default(IN_PROGRESS)
+  data            Json             @default("{}")  // Collected answers
+  aiSummary       String?          // AI-generated summary
+  aiInsights      Json?            // AI-generated insights (array of strings)
+  completedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relations
+  chatflowId      String
+  chatflow        Chatflow             @relation(fields: [chatflowId], references: [id], onDelete: Cascade)
+  messages        ConversationMessage[]
+
+  @@index([chatflowId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("chatflow_submissions")
+}
+
+enum SubmissionStatus {
+  IN_PROGRESS  // User is filling out the chatflow
+  COMPLETED    // User submitted the chatflow
+  ABANDONED    // User left without completing
+}
+
+// ============================================================================
+// CONVERSATION MESSAGES
+// ============================================================================
+
+model ConversationMessage {
+  id         String      @id @default(cuid())
+  role       MessageRole
+  content    String      @db.Text
+  fieldName  String?     // Which field this message relates to
+  createdAt  DateTime    @default(now())
+
+  // Relations
+  submissionId String
+  submission   ChatflowSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@index([createdAt])
+  @@map("conversation_messages")
+}
+
+enum MessageRole {
+  AI    // Message from the AI
+  USER  // Message from the user
+}
