@@ -7,10 +7,10 @@
 ### 1.1 Product Vision
 
 **Mission Statement:**  
-Eliminate friction in data collection by replacing outdated forms with intelligent, conversational experiences that understand context, validate in real-time, and extract insights automatically.
+Eliminate friction in data collection by replacing outdated forms with intelligent, conversational experiences that understand context, validate in real-time, extract insights automatically and even give reasoning based on the user's answers.
 
 **Core Belief:**  
-Forms are broken. A 60-70% abandonment rate is unacceptable. Conversational interfaces powered by AI represent the natural evolution of how humans and systems exchange information.
+Forms are broken. A 60-70% abandonment rate is unacceptable. Conversational interfaces powered by AI represent the natural evolution of how humans and systems should exchange information.
 
 ### 1.2 Product Principles
 
@@ -74,8 +74,12 @@ Forms are broken. A 60-70% abandonment rate is unacceptable. Conversational inte
 | Static fields | Limited branching | ✅ Dynamic AI-driven conversation |
 | Manual validation | Basic validation | ✅ Semantic + document validation |
 | No document processing | Link to upload | ✅ OCR + AI extraction + auto-fill |
+| Results interpretation | Complex configuration | Simple prompt based configuration |
 | Raw data export | Raw data export | ✅ Interpreted insights + recommendations |
 | 30% completion rate | 50% completion rate | **Target: 80%+ completion rate** |
+
+**Why IoZen wins:**
+IoZen wins because it's the only platform that can handle the entire form lifecycle, from data structure definition to initial conversation to final interpretation and insights. Everything is handled with the support of AI agents and with a wonderful, simple, and easy to use interface.
 
 **Moats we're building:**
 1. **Data Moat:** Form completion data improves AI models → better conversations → more completions → more data

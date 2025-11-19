@@ -40,3 +40,4 @@ pnpm-debug.log*
 # OS generated files
 Thumbs.db
 Desktop.ini
+.vercel
