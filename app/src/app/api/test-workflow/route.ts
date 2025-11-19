@@ -1,15 +1,17 @@
 import { start } from 'workflow/api';
-import { testWorkflow } from '@/workflows/test-workflow';
 import { NextResponse } from 'next/server';
+// import { testWorkflow } from '@/workflows/test-workflow';
 
-export async function POST(request: Request) {
-    const { message } = await request.json();
-
-    // Start workflow asynchronously
-    const run = await start(testWorkflow, [message]);
-
+export async function GET() {
+    // Temporarily disabled for deployment
     return NextResponse.json({
-        message: 'Test workflow started',
-        workflowId: run.id,
+        message: 'Test workflow endpoint disabled',
     });
+
+    // const run = await testWorkflow.start();
+
+    // return NextResponse.json({
+    //     message: 'Test workflow started',
+    //     workflowId: run.id,
+    // });
 }
