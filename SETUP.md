@@ -89,4 +89,48 @@ vercel --prod
 
 ---
 
-**Ready to create the Next.js project!**
+## GitHub Repository Setup
+
+### ✅ Git Initialized
+- **Location:** Root directory (`/Users/jacobomoreno/Dev/iozen`)
+- **Branch:** `main`
+- **Remote:** `https://github.com/chalajacobo/ioZen-App.git`
+- **Initial Commit:** Complete (41 files)
+
+### Next: Create GitHub Repository
+
+1. **Go to GitHub**: https://github.com/new
+2. **Repository Settings**:
+   - **Owner:** chalajacobo
+   - **Name:** ioZen-App
+   - **Visibility:** Public or Private (your choice)
+   - **⚠️ DO NOT initialize with README, .gitignore, or license** (we already have these)
+3. **Create Repository**
+4. **Push to GitHub**:
+   ```bash
+   cd /Users/jacobomoreno/Dev/iozen
+   git push -u origin main
+   ```
+
+### Git Workflow Commands
+
+```bash
+# Check status
+git status
+
+# Stage changes
+git add .
+
+# Commit changes
+git commit -m "feat: your feature description"
+
+# Push to GitHub
+git push
+
+# Pull latest changes
+git pull
+```
+
+---
+
+**Ready to push to GitHub!**
