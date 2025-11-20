@@ -10,7 +10,7 @@
 Eliminate friction in data collection by replacing outdated forms with intelligent, conversational experiences that understand context, validate in real-time, extract insights automatically and even give reasoning based on the user's answers.
 
 **Core Belief:**  
-Forms are broken. A 60-70% abandonment rate is unacceptable. Conversational interfaces powered by AI represent the natural evolution of how humans and systems should exchange information.
+Forms are broken. A 60-70% abandonment rate is unacceptable. Conversational interfaces powered by AI represent the natural evolution of how humans and systems should exchange information. 
 
 ### 1.2 Product Principles
 

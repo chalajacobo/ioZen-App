@@ -1,9 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma schema for IoZen
+// Docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -16,20 +12,66 @@ datasource db {
 }
 
 // ============================================================================
-// USERS
+// PROFILES (synced from auth.users via database trigger)
 // ============================================================================
 
-model User {
-  id        String   @id @default(cuid())
+model Profile {
+  id        String   @id // Same as auth.users.id (UUID from Supabase)
   email     String   @unique
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
+  memberships WorkspaceMember[]
+
+  @@map("profiles")
+}
+
+// ============================================================================
+// WORKSPACES
+// ============================================================================
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  members   WorkspaceMember[]
   chatflows Chatflow[]
 
-  @@map("users")
+  @@map("workspaces")
+}
+
+// ============================================================================
+// WORKSPACE MEMBERS (junction table for profile <-> workspace)
+// ============================================================================
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  profileId   String        @map("profile_id")
+  profile     Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  workspaceId String        @map("workspace_id")
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, workspaceId])
+  @@index([profileId])
+  @@index([workspaceId])
+  @@map("workspace_members")
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
 }
 
 // ============================================================================
@@ -39,27 +81,27 @@ model User {
 model Chatflow {
   id          String         @id @default(cuid())
   name        String
-  description String?        // Original user prompt
-  schema      Json           // Generated chatflow structure
+  description String?
+  schema      Json
   status      ChatflowStatus @default(DRAFT)
-  shareUrl    String         @unique // Public URL slug
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  shareUrl    String         @unique @map("share_url")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
 
-  // Relations
-  userId      String
-  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations - now belongs to workspace instead of user
+  workspaceId String               @map("workspace_id")
+  workspace   Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   submissions ChatflowSubmission[]
 
-  @@index([userId])
+  @@index([workspaceId])
   @@index([shareUrl])
   @@map("chatflows")
 }
 
 enum ChatflowStatus {
-  DRAFT      // Being created/edited
-  PUBLISHED  // Live and accepting submissions
-  ARCHIVED   // No longer accepting submissions
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
 // ============================================================================
@@ -67,19 +109,19 @@ enum ChatflowStatus {
 // ============================================================================
 
 model ChatflowSubmission {
-  id              String           @id @default(cuid())
-  status          SubmissionStatus @default(IN_PROGRESS)
-  data            Json             @default("{}")  // Collected answers
-  aiSummary       String?          // AI-generated summary
-  aiInsights      Json?            // AI-generated insights (array of strings)
-  completedAt     DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id          String           @id @default(cuid())
+  status      SubmissionStatus @default(IN_PROGRESS)
+  data        Json             @default("{}")
+  aiSummary   String?          @map("ai_summary")
+  aiInsights  Json?            @map("ai_insights")
+  completedAt DateTime?        @map("completed_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
 
   // Relations
-  chatflowId      String
-  chatflow        Chatflow             @relation(fields: [chatflowId], references: [id], onDelete: Cascade)
-  messages        ConversationMessage[]
+  chatflowId String               @map("chatflow_id")
+  chatflow   Chatflow             @relation(fields: [chatflowId], references: [id], onDelete: Cascade)
+  messages   ConversationMessage[]
 
   @@index([chatflowId])
   @@index([status])
@@ -88,9 +130,9 @@ model ChatflowSubmission {
 }
 
 enum SubmissionStatus {
-  IN_PROGRESS  // User is filling out the chatflow
-  COMPLETED    // User submitted the chatflow
-  ABANDONED    // User left without completing
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
 }
 
 // ============================================================================
@@ -101,11 +143,11 @@ model ConversationMessage {
   id         String      @id @default(cuid())
   role       MessageRole
   content    String      @db.Text
-  fieldName  String?     // Which field this message relates to
-  createdAt  DateTime    @default(now())
+  fieldName  String?     @map("field_name")
+  createdAt  DateTime    @default(now()) @map("created_at")
 
   // Relations
-  submissionId String
+  submissionId String             @map("submission_id")
   submission   ChatflowSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@index([submissionId])
@@ -114,6 +156,29 @@ model ConversationMessage {
 }
 
 enum MessageRole {
-  AI    // Message from the AI
-  USER  // Message from the user
+  AI
+  USER
+}
+
+// ============================================================================
+// AUDIT LOGS
+// ============================================================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  action    String   // INSERT, UPDATE, DELETE, LOGIN, LOGOUT, etc.
+  tableName String   @map("table_name")
+  recordId  String?  @map("record_id")
+  oldData   Json?    @map("old_data")
+  newData   Json?    @map("new_data")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([tableName])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
