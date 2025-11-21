@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
 import { getAuthContext } from '@/lib/api-auth';
+import { SubmissionData } from '@/types';
 
 const submissionSchema = z.object({
     submissionId: z.string().optional(),
     chatflowId: z.string(),
-    data: z.record(z.any()),
+    data: z.record(z.union([
+        z.string(),
+        z.number(),
+        z.boolean(),
+        z.array(z.string()),
+        z.null()
+    ])) as z.ZodType<SubmissionData>,
     status: z.enum(['IN_PROGRESS', 'COMPLETED', 'ABANDONED']).default('COMPLETED'),
 });
 
@@ -100,3 +107,4 @@ export async function POST(req: Request) {
         );
     }
 }
+

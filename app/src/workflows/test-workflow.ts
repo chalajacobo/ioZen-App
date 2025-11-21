@@ -1,5 +1,11 @@
 import { sleep } from 'workflow';
 
+interface ProcessedMessage {
+    original: string;
+    processed: string;
+    timestamp: string;
+}
+
 /**
  * Test workflow to verify Vercel Workflow is working correctly
  * This is a simple example that demonstrates workflow and step directives
@@ -23,7 +29,7 @@ export async function testWorkflow(message: string) {
     return result;
 }
 
-async function processMessage(message: string) {
+async function processMessage(message: string): Promise<ProcessedMessage> {
     'use step';
 
     console.log(`Processing message: ${message}`);
@@ -35,7 +41,7 @@ async function processMessage(message: string) {
     };
 }
 
-async function finalizeWorkflow(data: any) {
+async function finalizeWorkflow(data: ProcessedMessage) {
     'use step';
 
     console.log('Finalizing workflow...');
@@ -46,3 +52,4 @@ async function finalizeWorkflow(data: any) {
         workflowVersion: '1.0.0',
     };
 }
+

@@ -6,9 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { fieldSchema, FieldFormValues } from "@/lib/form-schemas";
 import { toast } from "sonner";
 import { Button } from "@/ui/button";
-import { Input, Textarea, Label, Switch } from "@/ui/forms";
+import { Input, Label, Switch } from "@/ui/forms";
 import { Separator } from "@/ui/layout";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/layout";
 import {
     Form,
     FormControl,
@@ -33,48 +32,31 @@ import {
 import { Card } from "@/ui/data-display";
 import {
     Type, Mail, Calendar, Hash, List, ToggleLeft, Phone, Link as LinkIcon,
-    FileText, Image as ImageIcon, X, Plus, GripVertical, Edit2, Trash2, Check
+    FileText, Image as ImageIcon, X, Plus, GripVertical, Trash2, Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-    DndContext,
     closestCenter,
     KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
-    DragEndEvent
+    DragEndEvent,
+    DndContext
 } from '@dnd-kit/core';
 import {
     arrayMove,
     SortableContext,
-    sortableKeyboardCoordinates,
     verticalListSortingStrategy,
     useSortable,
+    sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ChatflowField, FieldType } from "@/types";
 
-export interface Field {
-    id: string;
-    name: string;
-    label: string;
-    type: string;
-    required: boolean;
-    placeholder?: string;
-    validation?: any;
-    options?: string[];
-    helperText?: string;
-}
+export type { ChatflowField as Field };
 
-interface FieldDetailsPanelProps {
-    field: Field | null;
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (field: Field) => void;
-    onDelete: () => void;
-}
-
-const FIELD_TYPES = [
+const FIELD_TYPES: { value: FieldType; label: string; icon: any; description: string }[] = [
     { value: 'text', label: 'Text', icon: Type, description: 'Short text input' },
     { value: 'email', label: 'Email', icon: Mail, description: 'Email address validation' },
     { value: 'phone', label: 'Phone', icon: Phone, description: 'Phone number input' },
@@ -127,17 +109,18 @@ export function FieldEditor({
     onCancel,
     className
 }: {
-    field: Field;
-    onSave: (field: Field) => void;
+    field: ChatflowField;
+    onSave: (field: ChatflowField) => void;
     onDelete: () => void;
     onCancel?: () => void;
     className?: string;
 }) {
     const form = useForm<FieldFormValues>({
-        resolver: zodResolver(fieldSchema) as any, // Cast to any to avoid strict type mismatch with RHF
+        resolver: zodResolver(fieldSchema),
+        mode: "onChange",
         defaultValues: {
             id: field.id,
-            type: (field.type as any) || 'text',
+            type: field.type,
             label: field.label,
             name: field.name,
             required: field.required,
@@ -153,7 +136,7 @@ export function FieldEditor({
     useEffect(() => {
         form.reset({
             id: field.id,
-            type: (field.type as any),
+            type: field.type,
             label: field.label,
             name: field.name,
             required: field.required,
@@ -167,6 +150,7 @@ export function FieldEditor({
         onSave({
             ...data,
             validation: field.validation,
+            type: data.type as FieldType, // Ensure type compatibility
         });
     };
 
@@ -494,3 +478,4 @@ export function FieldEditor({
         </div >
     );
 }
+

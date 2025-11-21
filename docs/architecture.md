@@ -131,6 +131,71 @@ throw new RetryableError('Rate limited')
 
 ---
 
+## Real-time Architecture
+
+Supabase Real-time enables instant UI updates without polling.
+
+### When to Use Real-time
+
+Use Supabase Real-time subscriptions for:
+- Long-running background operations (AI generation, file processing)
+- Live collaboration features (multi-user editing)
+- Real-time notifications (new submissions, status changes)
+- Dashboard metrics that update frequently
+
+Don't use for:
+- One-time data fetches (use server components)
+- Rare updates (manual refresh is fine)
+- Public endpoints (real-time requires authentication)
+
+### Real-time Pattern
+
+```typescript
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+
+export function ChatflowMonitor({ chatflowId }: { chatflowId: string }) {
+  const router = useRouter()
+  const supabase = createClient()
+  
+  useEffect(() => {
+    const channel = supabase
+      .channel(`chatflow-${chatflowId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'Chatflow',
+          filter: `id=eq.${chatflowId}`
+        },
+        () => {
+          router.refresh() // Trigger server component re-fetch
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [chatflowId, router, supabase])
+
+  return null // UI handled by server component
+}
+```
+
+### Security Considerations
+
+- Real-time uses existing RLS policies
+- Client must have read permissions on subscribed table
+- Filter subscriptions by `workspaceId` when possible
+- Always validate data on the server after refresh
+
+---
+
 ## Directory Structure
 
 ```

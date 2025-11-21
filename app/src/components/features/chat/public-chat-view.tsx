@@ -3,31 +3,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/ui/button";
 import { Input, Textarea } from "@/ui/forms";
-import { Card } from "@/ui/data-display";
 import { Send, Loader2, Calendar as CalendarIcon, CheckCircle2, Bot, User } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/forms";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/overlays";
 import { Calendar } from "@/ui/data-display";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-
-interface Field {
-    id: string;
-    name: string;
-    label: string;
-    type: string;
-    required: boolean;
-    placeholder?: string;
-    options?: string[];
-    validation?: {
-        minLength?: number;
-        maxLength?: number;
-        pattern?: string;
-        min?: number;
-        max?: number;
-    };
-}
+import { ChatflowField, SubmissionData } from "@/types";
 
 interface Message {
     id: string;
@@ -38,11 +21,11 @@ interface Message {
     options?: string[];
 }
 
-export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowId: string, fields: Field[], chatflowName: string }) {
+export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowId: string, fields: ChatflowField[], chatflowName: string }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
     const [inputValue, setInputValue] = useState("");
-    const [answers, setAnswers] = useState<Record<string, any>>({});
+    const [answers, setAnswers] = useState<SubmissionData>({});
     const [isTyping, setIsTyping] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCompleted, setIsCompleted] = useState(false);
@@ -50,7 +33,7 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
     const [submissionId, setSubmissionId] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -408,10 +391,10 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
                                     );
                                 }
 
-                                if (currentField.type === 'textarea' || currentField.type === 'long_text') {
+                                if (currentField.type === 'textarea') {
                                     return (
                                         <Textarea
-                                            ref={inputRef as any}
+                                            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
                                             onKeyDown={(e) => {
@@ -430,7 +413,7 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
 
                                 return (
                                     <Input
-                                        ref={inputRef}
+                                        ref={inputRef as React.RefObject<HTMLInputElement>}
                                         value={inputValue}
                                         onChange={(e) => setInputValue(e.target.value)}
                                         onKeyDown={handleKeyDown}
@@ -463,3 +446,4 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
         </div>
     );
 }
+

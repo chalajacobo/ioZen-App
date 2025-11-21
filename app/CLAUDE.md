@@ -314,6 +314,33 @@ import type { Chatflow, Workspace } from '@prisma/client'
 import type { ApiResponse } from '@/types'
 ```
 
+### Type Guards
+
+When validating unknown data (especially from databases or APIs), always validate enum values:
+
+```typescript
+// GOOD - Validates enum values at runtime
+const VALID_FIELD_TYPES: readonly FieldType[] = [
+  'text', 'email', 'phone', 'url', 'textarea', 
+  'number', 'date', 'select', 'boolean', 'file'
+] as const
+
+function isValidFieldType(type: unknown): type is FieldType {
+  return typeof type === 'string' && 
+         VALID_FIELD_TYPES.includes(type as FieldType)
+}
+
+export function isChatflowSchema(obj: unknown): obj is ChatflowSchema {
+  // ... validate structure ...
+  return isValidFieldType(field.type)  // ✅ Validates enum
+}
+
+// BAD - Only checks string type
+function isFieldType(type: unknown): type is FieldType {
+  return typeof type === 'string'  // ❌ Allows invalid values!
+}
+```
+
 ---
 
 ## Error Handling

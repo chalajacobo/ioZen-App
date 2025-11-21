@@ -16,7 +16,7 @@ export const fieldSchema = z.object({
     ]),
     label: z.string().min(1, "Label is required"),
     name: z.string().min(1, "Variable name is required").regex(/^[a-zA-Z0-9_]+$/, "Variable name must contain only letters, numbers, and underscores"),
-    required: z.boolean().default(false),
+    required: z.boolean(),
     placeholder: z.string().optional(),
     helperText: z.string().optional(),
     options: z.array(z.string()).optional(),

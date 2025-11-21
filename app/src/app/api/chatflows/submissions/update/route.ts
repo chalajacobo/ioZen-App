@@ -2,12 +2,19 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
 import { getAuthContext } from '@/lib/api-auth';
+import { SubmissionData } from '@/types';
 
 const updateSubmissionSchema = z.object({
     submissionId: z.string().nullable().optional(),
     chatflowId: z.string(),
     fieldName: z.string(),
-    fieldValue: z.any(),
+    fieldValue: z.union([
+        z.string(),
+        z.number(),
+        z.boolean(),
+        z.array(z.string()),
+        z.null()
+    ]),
 });
 
 export async function POST(req: Request) {
@@ -73,7 +80,7 @@ export async function POST(req: Request) {
             }
 
             // Merge new field data with existing data
-            const currentData = existingSubmission.data as Record<string, any>;
+            const currentData = existingSubmission.data as unknown as SubmissionData;
             const updatedData = {
                 ...currentData,
                 [fieldName]: fieldValue,
@@ -117,3 +124,4 @@ export async function POST(req: Request) {
         );
     }
 }
+

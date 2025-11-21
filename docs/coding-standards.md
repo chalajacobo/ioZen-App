@@ -340,6 +340,118 @@ export const updateChatflowAction = createAction(
 
 ---
 
+## Real-time Subscription Standards
+
+### Standard Pattern
+
+```typescript
+// ✅ GOOD - Clean real-time subscription
+'use client'
+
+import { useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+
+interface RealtimeMonitorProps {
+  resourceId: string
+  table: string
+}
+
+export function RealtimeMonitor({ resourceId, table }: RealtimeMonitorProps) {
+  const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`${table}-${resourceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table,
+          filter: `id=eq.${resourceId}`
+        },
+        () => {
+          router.refresh()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [resourceId, table, router, supabase])
+
+  return null
+}
+```
+
+### Best Practices
+
+1. **Always clean up subscriptions**
+   ```typescript
+   // ✅ GOOD - Cleanup in useEffect return
+   return () => {
+     supabase.removeChannel(channel)
+   }
+   ```
+
+2. **Use specific filters**
+   ```typescript
+   // ✅ GOOD - Filter by specific ID
+   filter: `id=eq.${chatflowId}`
+   
+   // ❌ BAD - Too broad
+   filter: `workspaceId=eq.${workspaceId}`
+   ```
+
+3. **Trigger server re-fetch, don't update state directly**
+   ```typescript
+   // ✅ GOOD - Let server component handle data
+   router.refresh()
+   
+   // ❌ BAD - Updating client state from real-time
+   setData(payload.new)
+   ```
+
+4. **Use unique channel names**
+   ```typescript
+   // ✅ GOOD - Unique per resource
+   .channel(`chatflow-${chatflowId}`)
+   
+   // ❌ BAD - Generic name
+   .channel('updates')
+   ```
+
+### Real-time + Server Components Pattern
+
+```typescript
+// ✅ GOOD - Separation of concerns
+
+// Server component (fetches data)
+export default async function ChatflowPage({ params }) {
+  const { id } = await params
+  const chatflow = await getChatflow(id)
+  
+  return (
+    <>
+      <ChatflowMonitor chatflowId={id} />
+      <ChatflowEditor chatflow={chatflow} />
+    </>
+  )
+}
+
+// Client component (monitors changes)
+'use client'
+function ChatflowMonitor({ chatflowId }: { chatflowId: string }) {
+  // Real-time subscription logic
+  return null
+}
+```
+
+---
+
 ## Database & Prisma Standards
 
 ### Always Use Migrations
@@ -443,6 +555,62 @@ import type { ApiResponse } from '@/types'
 import { useState } from 'react'
 import type { FC } from 'react'
 ```
+
+### Type Guards & Runtime Validation
+
+Type guards provide runtime type safety for `unknown` values. **Always validate enum values** to prevent invalid data.
+
+```typescript
+// ✅ GOOD - Type guard with enum validation
+const VALID_FIELD_TYPES: readonly FieldType[] = [
+  'text',
+  'email',
+  'phone',
+  'url',
+  'textarea',
+  'number',
+  'date',
+  'select',
+  'boolean',
+  'file'
+] as const
+
+function isValidFieldType(type: unknown): type is FieldType {
+  return typeof type === 'string' && VALID_FIELD_TYPES.includes(type as FieldType)
+}
+
+// Use in complex type guard
+export function isChatflowSchema(obj: unknown): obj is ChatflowSchema {
+  if (!obj || typeof obj !== 'object') return false
+  const schema = obj as Partial<ChatflowSchema>
+  return (
+    Array.isArray(schema.fields) &&
+    schema.fields.every((field: unknown) => {
+      if (!field || typeof field !== 'object') return false
+      const f = field as Partial<ChatflowField>
+      return (
+        typeof f.id === 'string' &&
+        isValidFieldType(f.type) &&  // ✅ Validates against enum
+        typeof f.label === 'string' &&
+        typeof f.name === 'string' &&
+        typeof f.required === 'boolean'
+      )
+    })
+  )
+}
+
+// ❌ BAD - Only checks if it's a string (allows invalid values)
+export function isChatflowSchema(obj: unknown): obj is ChatflowSchema {
+  // ...
+  return typeof f.type === 'string'  // ❌ Doesn't validate enum values!
+}
+```
+
+**Why This Matters:**
+- Prevents invalid enum values from passing validation (e.g., 'long_text' instead of 'textarea')
+- Catches data corruption or legacy data issues at runtime
+- Provides better error messages for invalid data
+- Essential for database `Json` fields that bypass TypeScript compile-time checks
 
 ---
 

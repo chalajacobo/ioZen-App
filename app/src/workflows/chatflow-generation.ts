@@ -1,5 +1,6 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 import { z } from 'zod';
+import { ChatflowSchema, isChatflowSchema, ChatflowField } from '@/types';
 
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -22,7 +23,7 @@ export async function generateChatflowBackground(chatflowId: string, description
         await prisma.chatflow.update({
             where: { id: chatflowId },
             data: {
-                schema: validatedSchema,
+                schema: validatedSchema as unknown as object, // Cast for Prisma Json
                 name: suggestedName
             }
         });
@@ -87,7 +88,7 @@ Return a JSON object with this structure:
     }
 }
 
-async function generateSchemaStep(description: string, analysis: string) {
+async function generateSchemaStep(description: string, analysis: string): Promise<ChatflowSchema> {
 
     console.log('[generateSchemaStep] Starting schema generation...');
     console.log('[generateSchemaStep] API Key present:', !!process.env.ANTHROPIC_API_KEY);
@@ -96,9 +97,9 @@ async function generateSchemaStep(description: string, analysis: string) {
         console.warn('[generateSchemaStep] No API key found, using mock data');
         return {
             fields: [
-                { id: "f1", name: "field1", label: "Mock Question 1", type: "text", required: true },
+                { id: "f1", name: "field1", label: "Mock Question 1", type: "text", required: true, options: [] },
                 { id: "f2", name: "field2", label: "Mock Question 2", type: "select", required: false, options: ["Option A", "Option B"] }
-            ]
+            ] as ChatflowField[]
         };
     }
 
@@ -180,15 +181,14 @@ Return ONLY the JSON object. Do not include markdown formatting or explanations.
         console.error("AI Generation failed, using mock:", error);
         return {
             fields: [
-                { id: "f1", name: "field1", label: "Mock Question 1", type: "text", required: true },
+                { id: "f1", name: "field1", label: "Mock Question 1", type: "text", required: true, options: [] },
                 { id: "f2", name: "field2", label: "Mock Question 2", type: "select", required: false, options: ["Option A", "Option B"] }
-            ]
+            ] as ChatflowField[]
         };
     }
 }
 
-async function validateSchemaStep(schema: any) {
-
+async function validateSchemaStep(schema: unknown): Promise<ChatflowSchema> {
 
     const fieldSchema = z.object({
         id: z.string(),
@@ -197,6 +197,7 @@ async function validateSchemaStep(schema: any) {
         type: z.enum(["text", "email", "number", "date", "select", "boolean", "textarea", "phone", "url", "file"]),
         required: z.boolean(),
         placeholder: z.string().optional(),
+        helperText: z.string().optional(),
         options: z.array(z.string()).optional(),
         validation: z.object({
             minLength: z.number().optional(),
@@ -204,12 +205,19 @@ async function validateSchemaStep(schema: any) {
             pattern: z.string().optional(),
             min: z.number().optional(),
             max: z.number().optional(),
+            message: z.string().optional(),
         }).optional(),
     });
 
     const chatflowSchema = z.object({
         fields: z.array(fieldSchema),
+        settings: z.object({
+            theme: z.enum(['light', 'dark']).optional(),
+            submitButtonText: z.string().optional(),
+            successMessage: z.string().optional(),
+        }).optional(),
     });
 
     return chatflowSchema.parse(schema);
 }
+

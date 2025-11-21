@@ -122,7 +122,7 @@ export default async function SubmissionsPage({ params }: PageProps) {
                                             </td>
                                             <td className="px-6 py-4 text-neutral-400 max-w-xs truncate">
                                                 {/* We need to cast JSON to object to extract values */}
-                                                {sub.data && typeof sub.data === 'object' ? Object.values(sub.data as Record<string, any>).join(', ') : '-'}
+                                                {sub.data && typeof sub.data === 'object' ? Object.values(sub.data as Record<string, unknown>).join(', ') : '-'}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-white">

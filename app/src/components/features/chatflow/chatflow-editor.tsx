@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/ui/data-display";
 import { Input, Label } from "@/ui/forms";
 import { Separator } from "@/ui/layout";
-import { Badge } from "@/ui/data-display";
 import { ChatView } from "@/features/chat";
 import {
     Plus, Check, ExternalLink, PlayCircle, Settings2, Hash, Calendar,
@@ -36,11 +35,12 @@ import {
     DropdownMenuTrigger,
 } from "@/ui/overlays";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/ui/layout";
-import { FieldEditor, type Field } from "@/features/chatflow";
+import { FieldEditor } from "@/features/chatflow";
 import { toast } from "sonner";
 import { updateChatflowAction, publishChatflowAction } from "@/app/actions/chatflow";
+import { Chatflow, ChatflowField, isChatflowSchema } from "@/types";
 
-export function ChatflowEditor({ chatflow }: { chatflow: any }) {
+export function ChatflowEditor({ chatflow }: { chatflow: Chatflow }) {
     const [activeTab, setActiveTab] = useState<"config" | "preview">("config");
     const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
     const [chatflowName, setChatflowName] = useState(chatflow.name);
@@ -50,13 +50,16 @@ export function ChatflowEditor({ chatflow }: { chatflow: any }) {
     const [publishedUrl, setPublishedUrl] = useState("");
 
     // Initialize fields from chatflow schema
-    const [fields, setFields] = useState<any[]>(
-        (chatflow.schema as any)?.fields || []
-    );
+    const [fields, setFields] = useState<ChatflowField[]>(() => {
+        if (isChatflowSchema(chatflow.schema)) {
+            return chatflow.schema.fields;
+        }
+        return [];
+    });
 
     const selectedField = fields.find(f => f.id === selectedFieldId);
 
-    const handleUpdateField = (id: string, updates: any) => {
+    const handleUpdateField = (id: string, updates: Partial<ChatflowField>) => {
         setFields(fields.map(f => f.id === id ? { ...f, ...updates } : f));
     };
 
@@ -65,7 +68,7 @@ export function ChatflowEditor({ chatflow }: { chatflow: any }) {
         try {
             const result = await updateChatflowAction(chatflow.id, {
                 name: chatflowName,
-                schema: { fields },
+                schema: { fields } as object,
             });
 
             if (!result.success) throw new Error(result.error);
@@ -85,7 +88,7 @@ export function ChatflowEditor({ chatflow }: { chatflow: any }) {
             // First save
             const saveResult = await updateChatflowAction(chatflow.id, {
                 name: chatflowName,
-                schema: { fields },
+                schema: { fields } as object,
             });
             if (!saveResult.success) throw new Error(saveResult.error);
 
@@ -112,27 +115,27 @@ export function ChatflowEditor({ chatflow }: { chatflow: any }) {
     const getIconForType = (type: string) => {
         switch (type) {
             case 'text': return Type;
-            case 'long_text': return FileText;
             case 'textarea': return FileText;
             case 'number': return Hash;
             case 'date': return Calendar;
             case 'email': return MessageSquare;
             case 'select': return MoreHorizontal;
             case 'boolean': return Check;
-            case 'image': return ImageIcon;
             case 'file': return ImageIcon;
             default: return Type;
         }
     };
 
     const handleAddField = () => {
-        const newField = {
+        const newField: ChatflowField = {
             id: `field_${Date.now()}`,
             name: `field_${fields.length + 1}`,
             label: "New Field",
             type: "text",
             required: false,
-            description: ""
+            placeholder: "",
+            helperText: "",
+            options: []
         };
         setFields([...fields, newField]);
         setSelectedFieldId(newField.id);
@@ -433,7 +436,7 @@ function SortableFieldItem({
     onSelect,
     getIconForType
 }: {
-    field: any,
+    field: ChatflowField,
     isSelected: boolean,
     onSelect: () => void,
     getIconForType: (type: string) => any

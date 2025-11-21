@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { z } from 'zod'
 import { requireAuth, logApiAction } from '@/lib/api-auth'
+import { ChatflowField } from '@/types'
 
 const publishSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   workspaceSlug: z.string().min(1, 'Workspace is required'),
   schema: z.object({
-    fields: z.array(z.any()),
+    fields: z.array(z.custom<ChatflowField>()),
   }),
 })
 
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
       data: {
         name,
         description: description || '',
-        schema: schema as object,
+        schema: schema as unknown as object,
         status: 'PUBLISHED',
         shareUrl,
         workspaceId: workspace.id,
@@ -107,3 +108,4 @@ export async function POST(req: Request) {
     )
   }
 }
+

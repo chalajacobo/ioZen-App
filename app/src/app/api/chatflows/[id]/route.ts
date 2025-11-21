@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
-import { ChatflowStatus } from '@prisma/client';
+import { ChatflowStatus, Prisma } from '@prisma/client';
 import { requireAuth } from '@/lib/api-auth';
+import { ChatflowSchema, isChatflowSchema } from '@/types';
 
 const updateSchema = z.object({
     name: z.string().optional(),
     description: z.string().optional(),
-    schema: z.any().optional(),
+    schema: z.custom<ChatflowSchema>((val) => isChatflowSchema(val)).optional(),
     status: z.nativeEnum(ChatflowStatus).optional(),
 });
 
@@ -123,9 +124,18 @@ export async function PATCH(
         }
 
         // Update the chatflow
+        // Destructure to separate schema from other fields
+        const { schema, ...otherData } = validatedData;
+        
         const updatedChatflow = await prisma.chatflow.update({
             where: { id },
-            data: validatedData,
+            data: {
+                ...otherData,
+                // Cast schema to Prisma.InputJsonValue if present
+                ...(schema && { 
+                    schema: schema as unknown as Prisma.InputJsonValue 
+                })
+            },
         });
 
         return NextResponse.json({

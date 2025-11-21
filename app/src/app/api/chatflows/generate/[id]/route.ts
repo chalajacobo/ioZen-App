@@ -1,6 +1,6 @@
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { ChatflowSchema, isChatflowSchema } from '@/types';
 
 export async function GET(
     req: Request,
@@ -21,17 +21,20 @@ export async function GET(
         }
 
         // Check if schema is populated (not empty object)
-        const schema = chatflow.schema as Record<string, any>;
-        const isGenerating = !schema || Object.keys(schema).length === 0;
-
-        if (isGenerating) {
+        const schema = chatflow.schema;
+        
+        if (!schema || !isChatflowSchema(schema) || schema.fields.length === 0) {
             return NextResponse.json({ status: 'running' });
         }
 
+        // At this point, schema is guaranteed to be ChatflowSchema
+        // Type assertion needed for spread operator
+        const validSchema: ChatflowSchema = schema;
+        
         return NextResponse.json({
             status: 'completed',
             result: {
-                ...schema,
+                ...validSchema,
                 name: chatflow.name
             }
         });
