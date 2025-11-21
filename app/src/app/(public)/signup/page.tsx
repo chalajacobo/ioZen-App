@@ -1,182 +1,141 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Button } from '@/ui/button'
+import { Input, Label } from '@/ui/forms'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/data-display'
+import { Loader2 } from 'lucide-react'
 
 export default function SignupPage() {
   const router = useRouter()
-
+  const supabase = createClient()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
-
-  const supabase = createClient()
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
+    // Client-side validation
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters')
       setLoading(false)
       return
     }
 
-    // Validate password strength
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters')
-      setLoading(false)
-      return
-    }
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
+      })
 
-    if (error) {
-      setError(error.message)
+      if (error) throw error
+
+      router.push('/login?message=Check your email to confirm your account')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
       setLoading(false)
-      return
     }
-
-    setMessage('Check your email to confirm your account!')
-    setLoading(false)
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <span className="text-3xl font-bold">iO</span>
-          <span className="text-2xl font-light">zen</span>
-        </div>
-        <CardTitle>Create your account</CardTitle>
-        <CardDescription>Start building intelligent chatflows today</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSignup} className="space-y-4">
-          <div className="space-y-2">
-            <label
-              htmlFor="name"
-              className="text-sm font-medium text-[var(--text-secondary)]"
-            >
-              Name
-            </label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              disabled={loading}
-            />
+    <div className="min-h-screen flex items-center justify-center bg-black p-4">
+      <Card className="w-full max-w-md bg-[hsl(var(--card))] border-[hsl(var(--border))]">
+        <CardHeader className="space-y-1">
+          <div className="flex items-center gap-2 mb-4">
+            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="10" width="30" height="80" rx="4" fill="white" />
+              <circle cx="25" cy="50" r="12" fill="black" />
+            </svg>
+            <span className="text-2xl font-bold text-white">iozen</span>
           </div>
-
-          <div className="space-y-2">
-            <label
-              htmlFor="email"
-              className="text-sm font-medium text-[var(--text-secondary)]"
-            >
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-[var(--text-secondary)]"
-            >
-              Password
-            </label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label
-              htmlFor="confirmPassword"
-              className="text-sm font-medium text-[var(--text-secondary)]"
-            >
-              Confirm Password
-            </label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          {error && (
-            <div className="p-3 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-[var(--radius-md)]">
-              {error}
+          <CardTitle className="text-2xl text-white">Create an account</CardTitle>
+          <CardDescription className="text-[hsl(var(--muted-foreground))]">
+            Enter your details to get started
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-white">Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={loading}
+                className="bg-[hsl(var(--input))] border-[hsl(var(--border))] text-white"
+              />
             </div>
-          )}
-
-          {message && (
-            <div className="p-3 text-sm text-green-500 bg-green-500/10 border border-green-500/20 rounded-[var(--radius-md)]">
-              {message}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+                className="bg-[hsl(var(--input))] border-[hsl(var(--border))] text-white"
+              />
             </div>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-white">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                className="bg-[hsl(var(--input))] border-[hsl(var(--border))] text-white"
+              />
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                Must be at least 6 characters
+              </p>
+            </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            loading={loading}
-            disabled={loading}
-          >
-            Create account
-          </Button>
-        </form>
+            {error && (
+              <div className="p-3 text-sm text-red-400 bg-red-950/20 border border-red-900/50 rounded-md">
+                {error}
+              </div>
+            )}
 
-        <p className="mt-6 text-center text-sm text-[var(--text-secondary)]">
-          Already have an account?{' '}
-          <Link
-            href="/login"
-            className="text-[var(--text-primary)] hover:underline font-medium"
-          >
-            Sign in
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+            <Button
+              type="submit"
+              className="w-full bg-white text-black hover:bg-gray-200"
+              disabled={loading}
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create account
+            </Button>
+
+            <div className="text-center text-sm text-[hsl(var(--muted-foreground))]">
+              Already have an account?{' '}
+              <Link href="/login" className="text-white hover:underline">
+                Sign in
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

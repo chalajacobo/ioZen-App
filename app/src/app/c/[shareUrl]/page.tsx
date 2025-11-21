@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { PublicChatView } from "@/components/public-chat-view";
+import type { Prisma } from "@prisma/client";
+import { PublicChatView } from "@/features/chat";
 
 interface PageProps {
     params: {
@@ -19,8 +20,8 @@ export default async function PublicChatflowPage({ params }: PageProps) {
     }
 
     // Parse schema to get fields
-    const schema = chatflow.schema as any;
-    const fields = schema.fields || [];
+    const schema = chatflow.schema as Prisma.JsonObject;
+    const fields = (schema.fields as Prisma.JsonArray) || [];
 
     return (
         <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4 md:p-8">

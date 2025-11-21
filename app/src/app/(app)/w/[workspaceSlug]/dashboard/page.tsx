@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/db'
 import { redirect } from 'next/navigation'
 import { Container, PageHeader } from '@/components/layout'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/ui/data-display'
+import { Button } from '@/ui/button'
+import { Badge } from '@/ui/data-display'
 import Link from 'next/link'
 import { Plus, MessageSquare, BarChart3 } from 'lucide-react'
 
@@ -56,7 +56,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const recentSubmissions = await prisma.chatflowSubmission.count({
     where: {
       chatflow: { workspaceId: workspace.id },
-      createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      createdAt: { gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000) },
     },
   })
 
@@ -65,7 +65,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
       <PageHeader
         title="Dashboard"
         description={`Welcome to ${workspace.name}`}
-        actions={
+        action={
           <Link href={`/w/${workspaceSlug}/chatflows/new`}>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
@@ -173,10 +173,10 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                     <Badge
                       variant={
                         chatflow.status === 'PUBLISHED'
-                          ? 'default'
+                          ? 'published'
                           : chatflow.status === 'DRAFT'
-                          ? 'secondary'
-                          : 'outline'
+                            ? 'draft'
+                            : 'archived'
                       }
                     >
                       {chatflow.status.toLowerCase()}

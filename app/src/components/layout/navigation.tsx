@@ -5,15 +5,21 @@ import { usePathname, useRouter } from 'next/navigation'
 import { User, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import type { Profile } from '@prisma/client'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+} from '@/ui/overlays'
+import { Avatar, AvatarFallback, AvatarImage } from '@/ui/data-display'
+
+interface Profile {
+  id: string
+  email: string
+  name: string | null
+  avatarUrl: string | null
+}
 
 interface NavigationProps {
   workspaceSlug?: string
@@ -28,17 +34,17 @@ export function Navigation({ workspaceSlug, profile }: NavigationProps) {
   // Build navigation links based on workspace context
   const navLinks = workspaceSlug
     ? [
-        { href: `/w/${workspaceSlug}/dashboard`, label: 'Dashboard' },
-        { href: `/w/${workspaceSlug}/chatflows`, label: 'Chatflows' },
-        { href: `/w/${workspaceSlug}/analytics`, label: 'Analytics' },
-        { href: `/w/${workspaceSlug}/settings`, label: 'Settings' },
-      ]
+      { href: `/w/${workspaceSlug}/dashboard`, label: 'Dashboard' },
+      { href: `/w/${workspaceSlug}/chatflows`, label: 'Chatflows' },
+      { href: `/w/${workspaceSlug}/analytics`, label: 'Analytics' },
+      { href: `/w/${workspaceSlug}/settings`, label: 'Settings' },
+    ]
     : [
-        { href: '/dashboard', label: 'Dashboard' },
-        { href: '/preview', label: 'Preview Chat' },
-        { href: '/analytics', label: 'Analytics' },
-        { href: '/settings', label: 'Settings' },
-      ]
+      { href: '/dashboard', label: 'Dashboard' },
+      { href: '/preview', label: 'Preview Chat' },
+      { href: '/analytics', label: 'Analytics' },
+      { href: '/settings', label: 'Settings' },
+    ]
 
   const secondaryLinks = [
     { href: '/feedback', label: 'Feedback' },
@@ -67,7 +73,7 @@ export function Navigation({ workspaceSlug, profile }: NavigationProps) {
   }
 
   return (
-    <nav className="h-16 border-b border-[var(--border-primary)] bg-[var(--background-primary)]">
+    <nav className="h-16 border-b bg-black" style={{ borderColor: 'hsl(var(--border-primary))' }}>
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left: Logo */}
         <div className="flex items-center">
@@ -75,8 +81,11 @@ export function Navigation({ workspaceSlug, profile }: NavigationProps) {
             href={workspaceSlug ? `/w/${workspaceSlug}/dashboard` : '/'}
             className="flex items-center gap-2"
           >
-            <span className="text-2xl font-bold">iO</span>
-            <span className="text-xl font-light">zen</span>
+            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="10" width="30" height="80" rx="4" fill="white" />
+              <circle cx="25" cy="50" r="12" fill="black" />
+            </svg>
+            <span className="text-2xl font-bold text-white">iozen</span>
           </Link>
         </div>
 
