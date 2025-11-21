@@ -27,7 +27,7 @@ Forms are broken. A 60-70% abandonment rate is unacceptable. Conversational inte
 - AI interprets results and provides actionable insights
 
 **P3: User Experience First**
-- Mobile-first design (60%+ of form fills happen on mobile)
+- Mobile-first design, specially our public chatflows (60%+ of form fills happen on mobile)
 - Minimize cognitive load (progressive disclosure, chunking)
 - Instant feedback (real-time validation, no surprises at submission)
 - Resume capability (never lose progress)

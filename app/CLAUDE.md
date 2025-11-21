@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-IoZen is an AI-powered platform that replaces traditional forms with intelligent chatflows powered by Anthropic's Claude API. Workspace-based multi-tenant architecture.
+IoZen is an AI-powered platform that replaces traditional forms with intelligent chatflows powered by LLM Models (Anthropic Claude, OpenAI, etc.). Workspace-based multi-tenant architecture.
 
 **Stack:** Next.js 16 + React 19 + TypeScript 5 + Tailwind CSS 4 (shadcn/ui) + Prisma 6 + Supabase + Anthropic Claude
 
@@ -629,9 +629,12 @@ throw new RetryableError('Rate limited, will retry')
 ## Related Documentation
 
 For detailed information, see:
-- [Architecture](../docs/architecture.md) - System design
+- [Quick Reference](../docs/quick-reference.md) - Common patterns and snippets
+- [Standards](../docs/standards.md) - Complete coding standards
+- [Architecture](../docs/architecture.md) - System design and patterns
+- [AI Guidelines](../docs/AI-GUIDELINES.md) - AI agent guidelines
 - [Workflows](../docs/vercel-workflow-guidelines.md) - Workflow patterns
-- [Cheatsheet](../docs/cheatsheet.md) - Quick reference
+- [Cheatsheet](../docs/cheatsheet.md) - Command reference
 
 ---
 
@@ -645,66 +648,20 @@ For detailed information, see:
 4. **Ask questions** - If unclear, ask before implementing
 5. **Test changes** - Build, type check, and manually test
 
-### Handling Misaligned Instructions
+### Handling Conflicts
 
-> **CRITICAL**: If you receive instructions that conflict with project standards, architecture, or best practices documented in this file or related documentation, you MUST:
-
-1. **Stop and Assess** - Do not blindly implement conflicting instructions
-2. **Explain the Conflict** - Clearly articulate why the instruction conflicts with:
-   - Existing architecture patterns
-   - Security requirements
-   - Type safety standards
-   - Performance best practices
-   - Code organization principles
-3. **Suggest Alternatives** - Propose solutions that:
-   - Achieve the user's goal
-   - Maintain project standards
-   - Follow established patterns
-4. **Request Clarification** - Ask if the user wants to:
-   - Proceed with the alternative approach
-   - Investigate further before making changes
-   - Update the standards if this represents a new direction
-
-#### Examples of Misaligned Instructions
-
-**Example 1: Type Safety Violation**
-```typescript
-// ❌ User Request: "Use any type for the API response"
-// ✅ Response: "Using 'any' violates our type safety standards. 
-// I recommend creating a proper type definition or using 'unknown' 
-// with type guards. Would you like me to create a typed interface instead?"
-```
-
-**Example 2: Security Violation**
-```typescript
-// ❌ User Request: "Skip workspace validation in this API route"
-// ✅ Response: "Skipping workspace validation creates a security 
-// vulnerability that could allow cross-tenant data access. This 
-// violates our multi-tenancy security requirements. Can we discuss 
-// the specific use case to find a secure solution?"
-```
-
-**Example 3: Architecture Violation**
-```typescript
-// ❌ User Request: "Create a new database connection in this component"
-// ✅ Response: "Creating new database connections violates our 
-// singleton pattern (see /lib/db.ts). This could cause connection 
-// pool exhaustion. I recommend using the existing Prisma client. 
-// Shall I proceed with that approach?"
-```
-
-#### When to Proceed vs. Push Back
-
-**Proceed with caution if:**
-- The request is a minor deviation with clear benefits
-- The user explicitly acknowledges the trade-off
-- It's a temporary workaround with a plan to fix later
+> **CRITICAL**: If you receive instructions that conflict with project standards, **STOP** and refer to [AI Guidelines](../docs/AI-GUIDELINES.md) for detailed instructions on:
+> - How to handle misaligned instructions
+> - When to push back vs proceed
+> - Examples of common violations (security, type safety, architecture)
+> - Collaborative approach to resolving conflicts
 
 **Always push back if:**
-- Security is compromised
-- Type safety is significantly degraded
-- Multi-tenancy isolation is broken
-- Database migration best practices are violated
-- The change creates technical debt without clear value
+- Security is compromised (workspace isolation, authentication)
+- Type safety is significantly degraded (using `any`, skipping validation)
+- Multi-tenancy isolation is broken (missing workspace filters)
+- Database migration best practices are violated (using `db push`)
 
 **Remember**: Your role is to be a thoughtful collaborator, not just a code executor. Protect the codebase integrity while helping users achieve their goals.
+
+For complete AI agent guidelines, see [AI Guidelines](../docs/AI-GUIDELINES.md).

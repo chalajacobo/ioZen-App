@@ -1,4 +1,26 @@
-# Coding Standards & Best Practices - ioZen
+# Coding Standards - ioZen
+
+> [!CAUTION]
+> **DEPRECATED - November 21, 2025**
+> 
+> This file has been deprecated and split into focused, organized documentation files.
+> 
+> **Reason**: The original 1,135-line file was too verbose and contained redundant information across multiple concerns (developer standards, AI instructions, daily patterns). This made it difficult to find information quickly.
+> 
+> **What Changed**: Documentation was restructured into a 3-tier hierarchy:
+> - **Tier 1 (Quick Start)**: [README.md](./README.md) - Project setup
+> - **Tier 2 (Daily Reference)**: [quick-reference.md](./quick-reference.md), [cheatsheet.md](./cheatsheet.md)
+> - **Tier 3 (Deep Dive)**: [standards.md](./standards.md), [architecture.md](./architecture.md), [AI-GUIDELINES.md](./AI-GUIDELINES.md)
+> 
+> **Migration Guide**:
+> - For **core coding standards** → See [standards.md](./standards.md) (400 lines, simplified)
+> - For **daily patterns & snippets** → See [quick-reference.md](./quick-reference.md) (729 lines)
+> - For **AI agent instructions** → See [AI-GUIDELINES.md](./AI-GUIDELINES.md) (310 lines)
+> - For **architectural decisions** → See [architecture.md](./architecture.md) (now with visual diagrams)
+> 
+> **Do not update this file**. It is kept for historical reference only.
+
+---
 
 **Purpose**: Ensure all code contributions (human and AI) maintain state-of-the-art quality  
 **Audience**: Developers, AI coding agents, code reviewers

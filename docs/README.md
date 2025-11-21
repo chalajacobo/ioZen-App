@@ -4,8 +4,10 @@
 
 | Doc | Description |
 |-----|-------------|
+| [Quick Reference](quick-reference.md) | Daily patterns and snippets |
 | [Architecture](architecture.md) | System design, layers, patterns |
-| [Coding Standards](coding-standards.md) | Code conventions for all agents |
+| [Standards](standards.md) | Coding standards for all developers |
+| [AI Guidelines](AI-GUIDELINES.md) | AI agent instructions |
 | [Workflows](vercel-workflow-guidelines.md) | Vercel Workflow patterns |
 | [Cheatsheet](cheatsheet.md) | Common commands |
 | [Vision](vision-product-philosophy.md) | Product philosophy |
@@ -13,7 +15,8 @@
 ## AI Agent Instructions
 
 - **Claude Code**: See [app/CLAUDE.md](../app/CLAUDE.md)
-- **Other Agents/Humans**: See [Coding Standards](coding-standards.md)
+- **AI Agents**: See [AI Guidelines](AI-GUIDELINES.md)
+- **Other Developers**: See [Standards](standards.md)
 
 ## Stack
 

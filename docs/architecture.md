@@ -75,18 +75,20 @@ IoZen is a monolithic Next.js application with modular boundaries designed for e
 
 ## Authentication Flow
 
-```
-User Signup
-    │
-    ▼
-Supabase Auth creates user
-    │
-    ▼
-Database trigger fires
-    │
-    ├─► Create profile
-    ├─► Create workspace
-    └─► Create membership (OWNER)
+```mermaid
+sequenceDiagram
+    participant User
+    participant Supabase Auth
+    participant Database
+    participant Trigger
+    
+    User->>Supabase Auth: Sign up
+    Supabase Auth->>Database: Create user record
+    Database->>Trigger: Fire on_auth_user_created
+    Trigger->>Database: Create profile
+    Trigger->>Database: Create workspace
+    Trigger->>Database: Create membership (OWNER)
+    Database-->>User: Setup complete
 ```
 
 ### Security Rules
@@ -128,6 +130,98 @@ throw new FatalError('Invalid input')
 // Retryable - auto-retry
 throw new RetryableError('Rate limited')
 ```
+
+---
+
+## Decision Trees
+
+### When to Use Server vs Client Components?
+
+```mermaid
+graph TD
+    A[Need to render component?] --> B{Requires user interaction?}
+    B -->|Yes| C{What kind?}
+    B -->|No| D[Server Component]
+    C -->|State, effects, events| E[Client Component]
+    C -->|Just onClick prop| F{Parent handles state?}
+    F -->|Yes| D
+    F -->|No| E
+    
+    style D fill:#90EE90
+    style E fill:#FFB6C1
+```
+
+**Server Component** when:
+- Fetching data from database
+- Accessing backend resources
+- Keeping sensitive information on server
+- No user interaction needed
+
+**Client Component** when:
+- Using React hooks (useState, useEffect)
+- Handling browser events (onClick, onChange)
+- Using browser APIs (localStorage, window)
+- Need interactivity or state management
+
+---
+
+### When to Use Workflows vs API Routes?
+
+```mermaid
+graph TD
+    A[Need to execute operation?] --> B{How long will it take?}
+    B -->|>30 seconds| C[Vercel Workflow]
+    B -->|5-30 seconds| D{Can it fail?}
+    B -->|<5 seconds| E[API Route]
+    D -->|Yes, needs retry| C
+    D -->|No| F[Background Job]
+    
+    style C fill:#87CEEB
+    style E fill:#90EE90
+    style F fill:#FFD700
+```
+
+**Vercel Workflow** when:
+- Long-running operations (>30s)
+- Need automatic retries
+- Multi-step processes
+- Human-in-the-loop scenarios
+- Must survive deployments
+
+**API Route** when:
+- Quick operations (<5s)
+- Synchronous responses needed
+- Simple CRUD operations
+
+---
+
+### When to Use Real-time Subscriptions?
+
+```mermaid
+graph TD
+    A[Need UI updates?] --> B{How often?}
+    B -->|Continuously| C{User triggered?}
+    B -->|Occasionally| D[Manual refresh]
+    C -->|Yes| E[Optimistic update]
+    C -->|No| F{Background process?}
+    F -->|Yes| G[Real-time subscription]
+    F -->|No| D
+    
+    style G fill:#87CEEB
+    style E fill:#90EE90
+    style D fill:#FFD700
+```
+
+**Real-time Subscription** when:
+- Long-running background operations (AI generation, file processing)
+- Live collaboration features
+- Real-time notifications
+- Dashboard metrics that update frequently
+
+**Don't use** when:
+- One-time data fetches (use server components)
+- Rare updates (manual refresh is fine)
+- Public endpoints (real-time requires authentication)
 
 ---
 
