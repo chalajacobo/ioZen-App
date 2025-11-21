@@ -119,10 +119,16 @@ export async function updateChatflowAction(id: string, data: Prisma.JsonObject) 
 
     if (!membership) throw new Error('Unauthorized access to workspace')
 
-    // Update
+    // Update - Cast schema to Prisma InputJsonValue
+    const updateData: Prisma.ChatflowUpdateInput = {
+      ...(validated.name && { name: validated.name }),
+      ...(validated.schema && { schema: validated.schema as Prisma.InputJsonValue }),
+      ...(validated.status && { status: validated.status }),
+    }
+
     await prisma.chatflow.update({
       where: { id },
-      data: validated,
+      data: updateData,
     })
 
     revalidatePath(`/w/${chatflow.workspace.slug}/chatflows/${id}`)
