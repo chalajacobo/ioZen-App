@@ -5,7 +5,7 @@ import prisma from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 import { Container, PageHeader } from "@/components/layout";
 import { Button } from "@/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/ui/data-display";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/ui/data-display";
 import { Badge } from "@/ui/data-display";
 
 interface PageProps {

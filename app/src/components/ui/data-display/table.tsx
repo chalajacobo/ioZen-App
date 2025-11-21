@@ -1,6 +1,7 @@
 import { type HTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TableProps extends HTMLAttributes<HTMLTableElement> { }
 
 export const Table = forwardRef<HTMLTableElement, TableProps>(
@@ -19,6 +20,7 @@ export const Table = forwardRef<HTMLTableElement, TableProps>(
 
 Table.displayName = 'Table';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> { }
 
 export const TableHeader = forwardRef<HTMLTableSectionElement, TableHeaderProps>(
@@ -35,6 +37,7 @@ export const TableHeader = forwardRef<HTMLTableSectionElement, TableHeaderProps>
 
 TableHeader.displayName = 'TableHeader';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> { }
 
 export const TableBody = forwardRef<HTMLTableSectionElement, TableBodyProps>(
@@ -74,6 +77,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
 
 TableRow.displayName = 'TableRow';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TableHeadProps extends HTMLAttributes<HTMLTableCellElement> { }
 
 export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
@@ -94,6 +98,7 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
 
 TableHead.displayName = 'TableHead';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> { }
 
 export const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(

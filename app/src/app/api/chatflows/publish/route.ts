@@ -23,7 +23,7 @@ function generateSlug(length = 8) {
 }
 
 /**
- * POST /api/chatflow/publish
+ * POST /api/chatflows/publish
  * Create and publish a new chatflow.
  */
 export async function POST(req: Request) {

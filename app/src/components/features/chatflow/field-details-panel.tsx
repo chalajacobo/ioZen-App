@@ -32,7 +32,7 @@ import {
 import { Card } from "@/ui/data-display";
 import {
     Type, Mail, Calendar, Hash, List, ToggleLeft, Phone, Link as LinkIcon,
-    FileText, Image as ImageIcon, X, Plus, GripVertical, Trash2, Check
+    FileText, Image as ImageIcon, X, Plus, GripVertical, Trash2, Check, LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -56,7 +56,7 @@ import { ChatflowField, FieldType } from "@/types";
 
 export type { ChatflowField as Field };
 
-const FIELD_TYPES: { value: FieldType; label: string; icon: any; description: string }[] = [
+const FIELD_TYPES: { value: FieldType; label: string; icon: LucideIcon; description: string }[] = [
     { value: 'text', label: 'Text', icon: Type, description: 'Short text input' },
     { value: 'email', label: 'Email', icon: Mail, description: 'Email address validation' },
     { value: 'phone', label: 'Phone', icon: Phone, description: 'Phone number input' },
@@ -450,7 +450,7 @@ export function FieldEditor({
                             <AlertDialogHeader>
                                 <AlertDialogTitle className="text-neutral-200">Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription className="text-neutral-400">
-                                    This action cannot be undone. This will permanently delete the field <span className="text-neutral-200 font-medium">"{field.label}"</span>.
+                                    This action cannot be undone. This will permanently delete the field <span className="text-neutral-200 font-medium">&quot;{field.label}&quot;</span>.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

@@ -401,6 +401,8 @@ const profile = new ProfileFactory()
 
 ```bash
 # Development
+cd /Users/jacobomoreno/Dev/iozen/app
+pnpm dev
 pnpm dev                    # Start dev server
 pnpm build                  # Build for production
 pnpm tsc --noEmit          # Type check

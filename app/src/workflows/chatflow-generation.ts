@@ -1,6 +1,6 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 import { z } from 'zod';
-import { ChatflowSchema, isChatflowSchema, ChatflowField } from '@/types';
+import { ChatflowSchema, ChatflowField } from '@/types';
 
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY || '',

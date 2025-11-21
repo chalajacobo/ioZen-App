@@ -9,7 +9,7 @@ import { ChatView } from "@/features/chat";
 import {
     Plus, Check, ExternalLink, PlayCircle, Settings2, Hash, Calendar,
     Type, ImageIcon, ChevronDown, Save, FileText, MoreHorizontal, MessageSquare,
-    Loader2, GripVertical, Copy, CheckCircle2
+    Loader2, GripVertical, Copy, CheckCircle2, LucideIcon
 } from 'lucide-react';
 import {
     DndContext,
@@ -123,7 +123,7 @@ export function ChatflowEditor({ chatflow }: { chatflow: Chatflow }) {
         }
     };
 
-    const getIconForType = (type: string) => {
+    const getIconForType = (type: string): LucideIcon => {
         switch (type) {
             case 'text': return Type;
             case 'textarea': return FileText;
@@ -276,7 +276,7 @@ export function ChatflowEditor({ chatflow }: { chatflow: Chatflow }) {
                                                     field={field}
                                                     isSelected={selectedFieldId === field.id}
                                                     onSelect={() => setSelectedFieldId(field.id)}
-                                                    getIconForType={getIconForType}
+                                                    IconComponent={getIconForType(field.type)}
                                                 />
                                             ))}
                                         </SortableContext>
@@ -462,12 +462,12 @@ function SortableFieldItem({
     field,
     isSelected,
     onSelect,
-    getIconForType
+    IconComponent
 }: {
     field: ChatflowField,
     isSelected: boolean,
     onSelect: () => void,
-    getIconForType: (type: string) => any
+    IconComponent: LucideIcon
 }) {
     const {
         attributes,
@@ -481,8 +481,6 @@ function SortableFieldItem({
         transform: CSS.Transform.toString(transform),
         transition,
     };
-
-    const Icon = getIconForType(field.type);
 
     return (
         <div ref={setNodeRef} style={style} className="mb-1.5">
@@ -503,7 +501,7 @@ function SortableFieldItem({
                         ? 'bg-blue-500/20 border border-blue-500/30'
                         : 'bg-neutral-900 border border-neutral-800'
                         }`}>
-                        <Icon className={`h-4 w-4 ${isSelected ? 'text-blue-400' : 'text-neutral-400'}`} />
+                        <IconComponent className={`h-4 w-4 ${isSelected ? 'text-blue-400' : 'text-neutral-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className={`font-medium text-sm ${isSelected ? 'text-blue-100' : 'text-neutral-200'}`}>

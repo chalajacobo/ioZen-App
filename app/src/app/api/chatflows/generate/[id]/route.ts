@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import { createApiHandler } from '@/lib/api-utils';
 import { prisma } from '@/lib/db';
 import { ChatflowSchema, isChatflowSchema } from '@/types';

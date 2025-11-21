@@ -31,7 +31,6 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
     const [isCompleted, setIsCompleted] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [submissionId, setSubmissionId] = useState<string | null>(null);
-    const [saveError, setSaveError] = useState<string | null>(null);
 
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
@@ -73,7 +72,7 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
                 setIsTyping(false);
             }, 1000);
         }
-    }, [fields, chatflowName]);
+    }, [fields, chatflowName, messages.length]);
 
     const getInputType = (fieldType: string): Message["type"] => {
         switch (fieldType) {
@@ -126,7 +125,7 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
         if (currentField.type === 'date' && value) {
             try {
                 displayValue = format(new Date(value), "MMMM d, yyyy");
-            } catch (e) {
+            } catch {
                 // If formatting fails, use original value
                 displayValue = value;
             }
@@ -143,9 +142,6 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
         // Save answer locally
         const newAnswers = { ...answers, [currentField.name]: value };
         setAnswers(newAnswers);
-
-        // Clear any previous errors
-        setSaveError(null);
 
         // Save to backend immediately
         setIsTyping(true);
@@ -218,10 +214,9 @@ export function PublicChatView({ chatflowId, fields, chatflowName }: { chatflowI
                     }
                 }, 1000);
             }
-        } catch (error) {
+        } catch {
             // Handle save error
             setIsTyping(false);
-            setSaveError("Failed to save your answer. Please try again.");
             setMessages(prev => [
                 ...prev,
                 {
