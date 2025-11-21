@@ -1,0 +1,488 @@
+# IoZen Cursor Rules
+
+## Project Context
+
+You are working on **IoZen**, an AI-powered platform that replaces traditional forms with intelligent chatflows powered by Claude AI.
+
+**Stack:** Next.js 16 + React 19 + TypeScript 5 + Tailwind CSS 4 (shadcn/ui) + Prisma 6 + Supabase + Anthropic Claude
+
+**Architecture:** Workspace-based multi-tenant SaaS with strict row-level security (RLS)
+
+---
+
+## Core Principles
+
+### 1. Simplicity First
+- Write code for humans first, machines second
+- Prefer explicit over clever
+- One responsibility per function/component
+- If it needs a comment to explain, refactor it
+- We create MSPs (minimum sellable products) not MVPs
+
+### 2. Type Safety is Non-Negotiable
+- **NEVER use `any` types** without explicit justification
+- All function parameters must be typed
+- All API responses must be typed
+- Use `unknown` instead of `any` when type is truly unknown
+- Always specify return types for functions
+
+### 3. Security by Design
+- **ALWAYS filter by `workspaceId`** in multi-tenant queries
+- Use `getUser()` NEVER `getSession()` on server-side
+- Use `requireAuth()` helper in ALL API routes
+- Validate ALL input with Zod schemas
+- Never expose internal IDs in URLs (use slugs/shareUrls)
+
+---
+
+## File Organization
+
+### Directory Structure
+```
+src/
+├── app/
+│   ├── (app)/             # Authenticated routes
+│   ├── (public)/          # Public routes
+│   ├── api/               # API routes
+│   └── actions/           # Server actions
+├── components/
+│   ├── features/          # Feature-specific (chatflow/, chat/, workspace/)
+│   ├── layout/            # Layout components
+│   └── ui/                # Reusable UI (shadcn)
+├── lib/                   # Utilities and configs
+├── types/                 # TypeScript types
+└── workflows/             # Vercel Workflows
+```
+
+### Naming Conventions
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Files/Directories | `kebab-case` | `chatflow-editor.tsx` |
+| Components | `PascalCase` | `ChatflowEditor` |
+| Functions/Variables | `camelCase` | `createChatflow` |
+| Types/Interfaces | `PascalCase` | `ChatflowSchema` |
+| Constants | `UPPER_SNAKE_CASE` | `MAX_FILE_SIZE` |
+| Database columns | `snake_case` | `created_at` |
+| Private functions | `_camelCase` | `_validateInput` |
+
+---
+
+## Component Standards
+
+### Default to Server Components
+```typescript
+// ✅ GOOD - Server component (no 'use client')
+interface ChatflowListProps {
+  workspaceId: string
+}
+
+export async function ChatflowList({ workspaceId }: ChatflowListProps) {
+  const chatflows = await prisma.chatflow.findMany({
+    where: { workspaceId }
+  })
+  return <div>{/* ... */}</div>
+}
+```
+
+### Client Components (Only When Needed)
+Use `'use client'` ONLY for:
+- Interactive forms with state
+- Event handlers (onClick, onChange)
+- Browser APIs (localStorage, window)
+- React hooks (useState, useEffect)
+
+### Component Organization Order
+```typescript
+'use client'
+
+// 1. Imports (grouped: React → External → Internal UI → Internal Features → Lib → Types)
+import { useState, useEffect } from 'react'
+import { z } from 'zod'
+import { Button, Input } from '@/ui/forms'
+import { ChatflowEditor } from '@/features/chatflow'
+import { cn } from '@/lib/utils'
+import type { Chatflow } from '@/types'
+
+// 2. Types/Interfaces
+interface Props {
+  chatflow: Chatflow
+}
+
+// 3. Constants
+const VALIDATION_SCHEMA = z.object({ name: z.string().min(1) })
+
+// 4. Component
+export function Component({ chatflow }: Props) {
+  // Hooks first
+  const [state, setState] = useState()
+  
+  // Effects
+  useEffect(() => {}, [])
+  
+  // Event handlers
+  const handleClick = () => {}
+  
+  // Render
+  return <div>...</div>
+}
+```
+
+---
+
+## API Route Standards
+
+### Always Use This Pattern
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { createApiHandler } from '@/lib/api-utils'
+import { requireAuth } from '@/lib/api-auth'
+import prisma from '@/lib/db'
+
+const createSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional()
+})
+
+export const POST = createApiHandler(async (req: NextRequest) => {
+  const { auth } = await requireAuth()
+  
+  const body = await req.json()
+  const validated = createSchema.parse(body)
+
+  // ✅ ALWAYS filter by workspaceId
+  const result = await prisma.chatflow.create({
+    data: {
+      ...validated,
+      workspaceId: auth.workspaceId
+    }
+  })
+
+  return result
+})
+```
+
+### RESTful Conventions
+```
+GET    /api/chatflows              # List all
+POST   /api/chatflows              # Create new
+GET    /api/chatflows/:id          # Get one
+PATCH  /api/chatflows/:id          # Update
+DELETE /api/chatflows/:id          # Delete
+POST   /api/chatflows/:id/publish  # Action
+```
+
+### Dynamic Route Parameters
+```typescript
+// ✅ ALWAYS await params in Next.js 15+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params  // MUST await
+  // ...
+}
+```
+
+---
+
+## Database & Prisma Standards
+
+### ALWAYS Use Migrations
+```bash
+# ✅ GOOD
+npx prisma migrate dev --name add_chatflow_status
+
+# ❌ NEVER USE
+npx prisma db push  # Can cause data loss
+```
+
+### Multi-Tenancy Security
+```typescript
+// ✅ GOOD - Always filter by workspace
+const chatflow = await prisma.chatflow.findFirst({
+  where: {
+    id: chatflowId,
+    workspaceId: auth.workspaceId  // Security!
+  }
+})
+
+// ❌ BAD - Security vulnerability
+const chatflow = await prisma.chatflow.findUnique({
+  where: { id: chatflowId }
+})
+```
+
+### Query Optimization
+```typescript
+// ✅ GOOD - Select only needed fields
+const chatflows = await prisma.chatflow.findMany({
+  where: { workspaceId },
+  select: {
+    id: true,
+    name: true,
+    status: true,
+    _count: { select: { submissions: true } }
+  }
+})
+
+// ❌ BAD - Fetching all fields
+const chatflows = await prisma.chatflow.findMany({
+  where: { workspaceId }
+})
+```
+
+---
+
+## Import Organization
+
+Always organize imports in this order:
+
+```typescript
+// 1. React/Next
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+
+// 2. External libraries
+import { z } from 'zod'
+import { toast } from 'sonner'
+
+// 3. Internal - UI components
+import { Button } from '@/ui/button'
+import { Input, Textarea } from '@/ui/forms'
+import { Card } from '@/ui/data-display'
+
+// 4. Internal - Features
+import { ChatflowEditor } from '@/features/chatflow'
+
+// 5. Internal - Lib/Utils
+import { cn } from '@/lib/utils'
+import prisma from '@/lib/db'
+
+// 6. Types (last)
+import type { Chatflow } from '@/types'
+```
+
+### Path Aliases
+```typescript
+// ✅ ALWAYS use path aliases
+import { Button } from '@/ui/button'
+import { createChatflow } from '@/lib/chatflow'
+import type { Chatflow } from '@/types'
+
+// ❌ NEVER use relative paths
+import { Button } from '../../../components/ui/button'
+```
+
+---
+
+## Vercel Workflows
+
+### When to Create Steps
+**DO create steps for:**
+- External API calls (Claude, OCR, webhooks)
+- Database writes (critical data)
+- Long operations (>5 seconds)
+
+**DON'T create steps for:**
+- Simple validation
+- Data transformations
+- Database reads
+
+### Pattern
+```typescript
+export async function chatflowGenerationWorkflow(params: {
+  userId: string
+  description: string
+}) {
+  'use workflow'
+
+  const schema = await generateSchemaStep(params.description)
+  const validated = await validateSchemaStep(schema)
+  const chatflow = await saveChatflowStep({
+    userId: params.userId,
+    schema: validated,
+    status: 'DRAFT'
+  })
+
+  return { chatflowId: chatflow.id }
+}
+
+async function generateSchemaStep(description: string) {
+  'use step'
+  return await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    messages: [{ role: 'user', content: description }]
+  })
+}
+```
+
+### Error Classification
+```typescript
+import { FatalError, RetryableError } from 'workflow'
+
+// Fatal - stop workflow
+throw new FatalError('Invalid input')
+
+// Retryable - auto-retry
+throw new RetryableError('Rate limited')
+```
+
+---
+
+## Error Handling
+
+### API Routes
+```typescript
+export const POST = createApiHandler(async (req) => {
+  try {
+    const body = await req.json()
+    const validated = schema.parse(body)
+    const result = await someOperation(validated)
+    return result
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error('Validation failed')
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error('Duplicate entry')
+      }
+    }
+    throw error
+  }
+})
+```
+
+### Client Components
+```typescript
+const handleSubmit = async () => {
+  try {
+    await submitChatflow(data)
+    toast.success('Chatflow created!')
+  } catch (error) {
+    toast.error(
+      error instanceof Error 
+        ? error.message 
+        : 'Something went wrong'
+    )
+  }
+}
+```
+
+---
+
+## Critical Rules to NEVER Violate
+
+### Security
+- ❌ NEVER skip workspace filtering in queries
+- ❌ NEVER use `getSession()` on server (use `getUser()`)
+- ❌ NEVER skip `requireAuth()` in API routes
+- ❌ NEVER expose internal IDs in public URLs
+
+### Type Safety
+- ❌ NEVER use `any` without justification
+- ❌ NEVER skip Zod validation for user input
+- ❌ NEVER leave return types implicit for exported functions
+
+### Database
+- ❌ NEVER use `prisma db push` (use migrations)
+- ❌ NEVER fetch all fields when only few are needed
+- ❌ NEVER skip workspace filtering in multi-tenant queries
+
+### Components
+- ❌ NEVER default to client components (server components first)
+- ❌ NEVER mix naming conventions in same file
+- ❌ NEVER use relative imports (use path aliases)
+
+---
+
+## When Instructions Conflict with Standards
+
+If you receive instructions that conflict with these standards, you MUST:
+
+1. **Stop and Assess** - Don't blindly implement
+2. **Explain the Conflict** - Articulate why it conflicts with:
+   - Security requirements (multi-tenancy, auth, RLS)
+   - Type safety standards
+   - Performance best practices
+   - Code organization principles
+3. **Suggest Alternatives** - Propose solutions that:
+   - Achieve the user's goal
+   - Maintain project standards
+   - Follow established patterns
+4. **Request Clarification** - Ask if the user wants to proceed with alternatives
+
+### Always Push Back If:
+- **Security is compromised** (workspace isolation, authentication, RLS)
+- **Type safety is significantly degraded** (using `any`, skipping validation)
+- **Multi-tenancy isolation is broken** (missing workspace filters)
+- **Database migration best practices are violated** (using `db push`)
+
+---
+
+## Performance Best Practices
+
+1. **Server Components by default** - Only use `'use client'` when needed
+2. **Select specific fields** - Don't fetch entire records
+3. **Proper indexing** - Index foreign keys and common queries
+4. **Workflow state < 100KB** - Pass IDs, not full objects
+5. **Optimize images** - Use Next.js Image component
+
+---
+
+## Testing Standards
+
+### Test File Location
+```
+src/lib/utils.ts          → src/lib/__tests__/utils.test.ts
+src/components/button.tsx → src/components/__tests__/button.test.tsx
+```
+
+### Test Structure
+```typescript
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+
+describe('Button', () => {
+  it('renders with text', () => {
+    render(<Button>Click me</Button>)
+    expect(screen.getByText('Click me')).toBeInTheDocument()
+  })
+
+  it('calls onClick when clicked', () => {
+    const handleClick = vi.fn()
+    render(<Button onClick={handleClick}>Click</Button>)
+    screen.getByText('Click').click()
+    expect(handleClick).toHaveBeenCalledOnce()
+  })
+})
+```
+
+---
+
+## Before Submitting Code
+
+Run these checks:
+```bash
+pnpm build              # Must succeed
+pnpm tsc --noEmit       # No type errors
+pnpm lint               # No new errors
+```
+
+---
+
+## References
+
+For more details, see:
+- `/docs/coding-standards.md` - Full coding standards
+- `/docs/architecture.md` - System architecture
+- `/docs/vercel-workflow-guidelines.md` - Workflow patterns
+- `/docs/vision-product-philosophy.md` - Product philosophy
+
+---
+
+**Remember:** Simplicity, type safety, and security are non-negotiable. When in doubt, ask: "Is this simple, clear, and maintainable?"
+
