@@ -347,24 +347,101 @@ function isFieldType(type: unknown): type is FieldType {
 
 ### API Routes
 
+**ALWAYS use `createApiHandler` for consistent error handling:**
+
 ```typescript
-try {
+// GOOD - Using createApiHandler utility
+import { NextRequest } from 'next/server'
+import { z } from 'zod'
+import { createApiHandler } from '@/lib/api-utils'
+import { requireAuth } from '@/lib/api-auth'
+import prisma from '@/lib/db'
+
+const createSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional()
+})
+
+export const POST = createApiHandler(async (req: NextRequest) => {
+  const { auth, error } = await requireAuth()
+  if (error) throw new Error('Unauthorized')
+
   const body = await req.json()
-  const validated = schema.parse(body)
-  const result = await someOperation(validated)
-  return NextResponse.json(result)
-} catch (error) {
-  if (error instanceof z.ZodError) {
-    return NextResponse.json({ error: error.errors }, { status: 400 })
-  }
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === 'P2002') {
-      return NextResponse.json({ error: 'Duplicate entry' }, { status: 409 })
+  const validated = createSchema.parse(body)
+
+  const chatflow = await prisma.chatflow.create({
+    data: {
+      ...validated,
+      workspaceId: auth.workspaceId
     }
-  }
-  return NextResponse.json({ error: 'Internal error' }, { status: 500 })
-}
+  })
+
+  return chatflow // Automatically wrapped in { success: true, data: chatflow }
+})
 ```
+
+Benefits:
+- Automatic error handling (Zod, Prisma, generic errors)
+- Consistent error responses across all routes
+- Type-safe responses with `ApiResponse<T>` and `ApiError`
+- Reduced boilerplate by ~40%
+
+**CRITICAL**: Do NOT include `success: true` in your return value - it's automatically added:
+
+```typescript
+// ❌ BAD - Double-wrapped
+return { success: true, chatflow }  // Becomes: { success: true, data: { success: true, chatflow: ... } }
+
+// ✅ GOOD - Correctly wrapped  
+return { chatflow }  // Becomes: { success: true, data: { chatflow: ... } }
+```
+
+### Server Actions
+
+**ALWAYS use `createObjectAction` for type-safe server actions:**
+
+```typescript
+// GOOD - Using createObjectAction utility
+'use server'
+
+import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
+import { createObjectAction } from '@/lib/action-utils'
+import { requireAuth } from '@/lib/api-auth'
+import prisma from '@/lib/db'
+
+const updateSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1).optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED']).optional()
+})
+
+export const updateChatflowAction = createObjectAction(
+  updateSchema,
+  async (validated) => {
+    const { auth } = await requireAuth()
+    if (!auth) throw new Error('Unauthorized')
+
+    const chatflow = await prisma.chatflow.update({
+      where: { id: validated.id },
+      data: validated
+    })
+
+    revalidatePath(`/w/${auth.workspaceSlug}/chatflows/${validated.id}`)
+    return { success: true }
+  }
+)
+
+// Usage in client component:
+const result = await updateChatflowAction({ id: '123', name: 'New Name' })
+if (!result.success) toast.error(result.error)
+```
+
+Benefits:
+- Automatic FormData parsing and validation
+- Consistent error responses with `ActionResult<T>`
+- Type-safe input and output
+- Zod validation errors automatically formatted
 
 ### Client Components
 

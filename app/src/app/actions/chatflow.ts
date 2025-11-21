@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import type { Prisma } from '@prisma/client'
+import { createObjectAction } from '@/lib/action-utils'
 import prisma from '@/lib/db'
 import { requireAuth } from '@/lib/api-auth'
 import { generateChatflowBackground } from '@/workflows/chatflow-generation'
@@ -15,6 +16,7 @@ const generateSchema = z.object({
 
 // Schema for updating chatflow
 const updateSchema = z.object({
+  id: z.string(),
   name: z.string().optional(),
   schema: z.record(z.unknown()).optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
@@ -92,17 +94,15 @@ export async function generateChatflowAction(formData: FormData) {
   }
 }
 
-export async function updateChatflowAction(id: string, data: Prisma.JsonObject) {
-  try {
+export const updateChatflowAction = createObjectAction(
+  updateSchema,
+  async (validated) => {
     const { auth, error } = await requireAuth()
     if (error) throw new Error('Unauthorized')
 
-    // Parse input
-    const validated = updateSchema.parse(data)
-
     // Check ownership via workspace
     const chatflow = await prisma.chatflow.findUnique({
-      where: { id },
+      where: { id: validated.id },
       include: { workspace: true }
     })
 
@@ -127,24 +127,18 @@ export async function updateChatflowAction(id: string, data: Prisma.JsonObject) 
     }
 
     await prisma.chatflow.update({
-      where: { id },
+      where: { id: validated.id },
       data: updateData,
     })
 
-    revalidatePath(`/w/${chatflow.workspace.slug}/chatflows/${id}`)
+    revalidatePath(`/w/${chatflow.workspace.slug}/chatflows/${validated.id}`)
     return { success: true }
-  } catch (error) {
-    console.error('Update action error:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update chatflow'
-    }
   }
-}
+)
 
 export async function publishChatflowAction(id: string) {
   try {
-    return await updateChatflowAction(id, { status: 'PUBLISHED' })
+    return await updateChatflowAction({ id, status: 'PUBLISHED' })
   } catch (error) {
     return {
       success: false,

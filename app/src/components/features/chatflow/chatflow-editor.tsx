@@ -66,7 +66,8 @@ export function ChatflowEditor({ chatflow }: { chatflow: Chatflow }) {
     const handleSaveClick = async () => {
         setIsSaving(true);
         try {
-            const result = await updateChatflowAction(chatflow.id, {
+            const result = await updateChatflowAction({
+                id: chatflow.id,
                 name: chatflowName,
                 schema: { fields } as object,
             });
@@ -86,7 +87,8 @@ export function ChatflowEditor({ chatflow }: { chatflow: Chatflow }) {
         setIsPublishing(true);
         try {
             // First save
-            const saveResult = await updateChatflowAction(chatflow.id, {
+            const saveResult = await updateChatflowAction({
+                id: chatflow.id,
                 name: chatflowName,
                 schema: { fields } as object,
             });

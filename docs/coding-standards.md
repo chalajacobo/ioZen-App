@@ -275,6 +275,25 @@ export const GET = createApiHandler(async (req: NextRequest) => {
 })
 ```
 
+**CRITICAL**: When using `createApiHandler`, **DO NOT** include `success: true` in your return value. The handler automatically wraps your response as `{ success: true, data: <your return> }`.
+
+```typescript
+// ❌ BAD - Double-wrapped response
+export const PATCH = createApiHandler(async (req) => {
+  const updated = await prisma.chatflow.update({ ... })
+  return { 
+    success: true,  // ❌ Creates { success: true, data: { success: true, ... } }
+    chatflow: updated 
+  }
+})
+
+// ✅ GOOD - Correctly wrapped
+export const PATCH = createApiHandler(async (req) => {
+  const updated = await prisma.chatflow.update({ ... })
+  return { chatflow: updated }  // ✅ Becomes { success: true, data: { chatflow: ... } }
+})
+```
+
 ### Dynamic Route Parameters
 
 ```typescript
@@ -337,6 +356,66 @@ export const updateChatflowAction = createAction(
   }
 )
 ```
+
+### Object-Based Actions (Preferred)
+
+For programmatic calls from client components, use `createObjectAction` instead of `createAction`:
+
+```typescript
+// ✅ GOOD - Using createObjectAction for direct object passing
+'use server'
+
+import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
+import { createObjectAction } from '@/lib/action-utils'
+import { requireAuth } from '@/lib/api-auth'
+import prisma from '@/lib/db'
+
+const updateChatflowSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1).optional(),
+  schema: z.record(z.unknown()).optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional()
+})
+
+export const updateChatflowAction = createObjectAction(
+  updateChatflowSchema,
+  async (validated) => {
+    const { auth } = await requireAuth()
+    if (!auth) throw new Error('Unauthorized')
+
+    const chatflow = await prisma.chatflow.update({
+      where: { id: validated.id },
+      data: {
+        name: validated.name,
+        schema: validated.schema,
+        status: validated.status
+      }
+    })
+
+    revalidatePath(`/w/${auth.workspaceSlug}/chatflows/${validated.id}`)
+    
+    return { success: true }
+  }
+)
+
+// Usage in client component:
+const handleSave = async () => {
+  const result = await updateChatflowAction({
+    id: chatflow.id,
+    name: chatflowName,
+    schema: { fields }
+  })
+  
+  if (!result.success) {
+    toast.error(result.error)
+  }
+}
+```
+
+**When to use each:**
+- Use `createAction` for traditional form submissions with `FormData`
+- Use `createObjectAction` for programmatic calls from React components (preferred for modern apps)
 
 ---
 

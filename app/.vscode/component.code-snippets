@@ -1,0 +1,94 @@
+{
+  "React Server Component": {
+    "prefix": "rsc",
+    "description": "Create a React Server Component with TypeScript",
+    "body": [
+      "interface ${1:ComponentName}Props {",
+      "  ${2:prop}: ${3:string}",
+      "}",
+      "",
+      "export async function ${1:ComponentName}({ ${2:prop} }: ${1:ComponentName}Props) {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ]
+  },
+  "React Client Component": {
+    "prefix": "rcc",
+    "description": "Create a React Client Component with TypeScript",
+    "body": [
+      "'use client'",
+      "",
+      "import { useState } from 'react'",
+      "",
+      "interface ${1:ComponentName}Props {",
+      "  ${2:prop}: ${3:string}",
+      "}",
+      "",
+      "export function ${1:ComponentName}({ ${2:prop} }: ${1:ComponentName}Props) {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ]
+  },
+  "API Route with createApiHandler": {
+    "prefix": "api",
+    "description": "Create a Next.js API route using createApiHandler",
+    "body": [
+      "import { NextRequest } from 'next/server'",
+      "import { z } from 'zod'",
+      "import { createApiHandler } from '@/lib/api-utils'",
+      "import { requireAuth } from '@/lib/api-auth'",
+      "import prisma from '@/lib/db'",
+      "",
+      "const ${1:request}Schema = z.object({",
+      "  ${2:field}: z.string()",
+      "})",
+      "",
+      "export const ${3:GET} = createApiHandler(async (req: NextRequest) => {",
+      "  const { auth } = await requireAuth()",
+      "  ",
+      "  $0",
+      "  ",
+      "  return { message: 'Success' }",
+      "})"
+    ]
+  },
+  "Server Action with createAction": {
+    "prefix": "action",
+    "description": "Create a Next.js Server Action using createAction",
+    "body": [
+      "'use server'",
+      "",
+      "import { z } from 'zod'",
+      "import { revalidatePath } from 'next/cache'",
+      "import { createObjectAction } from '@/lib/action-utils'",
+      "import { requireAuth } from '@/lib/api-auth'",
+      "import prisma from '@/lib/db'",
+      "",
+      "const ${1:action}Schema = z.object({",
+      "  ${2:field}: z.string()",
+      "})",
+      "",
+      "export const ${1:action}Action = createObjectAction(",
+      "  ${1:action}Schema,",
+      "  async (data) => {",
+      "    const { auth } = await requireAuth()",
+      "    if (!auth) throw new Error('Unauthorized')",
+      "    ",
+      "    $0",
+      "    ",
+      "    revalidatePath('${3:/path}')",
+      "    return { success: true }",
+      "  }",
+      ")"
+    ]
+  }
+}
+
