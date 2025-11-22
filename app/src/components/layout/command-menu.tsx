@@ -32,7 +32,7 @@ export function CommandMenu({ workspaceSlug }: { workspaceSlug: string }) {
   )
 
   return (
-    <CommandDialog modal open={open} onOpenChange={setOpen} suppressHydrationWarning>
+    <CommandDialog modal open={open} onOpenChange={setOpen}>
       <CommandInput placeholder='Type a command or search...' />
       <CommandList>
         <ScrollArea className='h-72 pe-1' type='hover'>
