@@ -22,6 +22,11 @@ export function CommandMenu({ workspaceSlug }: { workspaceSlug: string }) {
   const { setTheme } = useTheme()
   const { open, setOpen } = useSearch()
   const { navGroups } = getSidebarData(workspaceSlug)
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const runCommand = React.useCallback(
     (command: () => unknown) => {
@@ -30,6 +35,10 @@ export function CommandMenu({ workspaceSlug }: { workspaceSlug: string }) {
     },
     [setOpen]
   )
+
+  if (!mounted) {
+    return null
+  }
 
   return (
     <CommandDialog modal open={open} onOpenChange={setOpen}>
